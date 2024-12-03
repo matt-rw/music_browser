@@ -12,38 +12,33 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.firefox.service import Service
 
-
-# TODO:
-# - Abstract youtube out of class
-# - Convert into instance methods
-# - Add support for Chrome in addition to Firefox
-
+from browser.base_browser import BaseBrowser
 
 """Selenium Firefox browser.
 
 May require valid github GH_TOKEN environment variable.
+May need geckodriver binary.
 
 """
-class Browser:
-    def readInput(self, args=None):
-        if args==None:
-            args = ['']*2
-            args[0] = input('Artist name: ')
-            args[1] = input('Song name: ').replace(' ', '+')
-        args[0] = args[0].replace(' ', '+')
-        args[1] = args[1].replace(' ', '+')
-        url = f'https://www.youtube.com/results?search_query={args[0]}+{args[1]}'
-        
-        if args[2] == 1:
-            url = url + '+[live]'
-        
+class YouTubeBrowser(BaseBrowser):
+    def __init__(self, base_url: str='https://youtube.com'):
+        # self.base_url = base_url
+        super().__init__(base_url)
+
+    def read_input(self, *args) -> str:
+        """Formats URL with arguments"""
+        # TODO: replace args with SearchConfig
+        url = f'{self.base_url}/results?search_query='
+        for arg in args:
+            url += f'{arg.replace(" ", "+")}+'
         return url
     
-    def skip(self):
+    def skip(self) -> None:
+        """Attempts to skip a Youtube add."""
         try:
             for i in range(2):
                 wait = WebDriverWait(self.browser, 6)
-                visible = EC.visibility_of_element_located
+                visible = EC.visibility_of_element_located(
                     (By.CLASS_NAME, 'ytp-ad-skip-button-container')
                 )
                 wait.until(visible)
@@ -58,20 +53,20 @@ class Browser:
     def retrieve_links(self, url): 
         """Finds Youtube links for the given url."""
         # TODO: replace selenium with requests.get(url)
-        # options = FirefoxOptions()
-        # options.add_argument('--headless')
-        # service = Service(
-        #    executable_path=GeckoDriverManager().install()
-        # )
-        # self.browser = Firefox(service=service, options=options)
-        # wait = WebDriverWait(self.browser, 5)
-        # presence = EC.presence_of_element_located
-        # visible = EC.visibility_of_element_located((By.ID, 'logo-icon'))
-        # self.browser.get(url)
-        # wait.until(visible)
-        # source = self.browser.page_source
+        options = FirefoxOptions()
+        options.add_argument('--headless')
+        service = Service(
+            executable_path=GeckoDriverManager().install()
+        )
+        self.browser = Firefox(service=service, options=options)
+        wait = WebDriverWait(self.browser, 5)
+        presence = EC.presence_of_element_located
+        visible = EC.visibility_of_element_located((By.ID, 'logo-icon'))
+        self.browser.get(url)
+        wait.until(visible)
+        source = self.browser.page_source
 
-        requests.get(url)
+        # source = requests.get(url)
         soup = BeautifulSoup(source, 'html.parser')
 
         # TODO: return page source
@@ -88,8 +83,11 @@ class Browser:
         self.browser.quit()
         return new_links 
     
-    def showLink(self, link: str, show: bool) -> None:
-        """Opens a selenium in a thread and attempt to skip adds."""
+    def show_link(self, url: str, show: bool) -> None:
+        """Opens a selenium in a thread."""
+        # TODO: replace URL with full URL
+        url = 'https://www.youtube.com' + url
+    
         options = FirefoxOptions()
         if show:
             options = FirefoxOptions()
@@ -104,8 +102,6 @@ class Browser:
             )
             self.browser = Firefox(service=service, options=options)
 
-        url = 'https://www.youtube.com' + link
-    
         wait = WebDriverWait(self.browser, 5)
         # presence = EC.presence_of_element_located
         visible = EC.visibility_of_element_located
