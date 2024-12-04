@@ -20,3 +20,9 @@ Enter the venv and run the GUI.
 
 `python3 gui.py`
 
+## Screenshots
+
+![Home](images/home.jpg)
+
+![Search](images/search.jpg)
+
